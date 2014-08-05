@@ -1,8 +1,8 @@
 package airplay
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -12,17 +12,17 @@ type connection struct {
 	endpoint string
 }
 
-func newConnection() *connection {
+func newConnection() (*connection, error) {
 	devices := Devices()
 
 	if len(devices) == 0 {
-		log.Fatal("AirPlay devices not found")
+		return nil, errors.New("AirPlay devices not found")
 	}
 
 	device := devices[0]
 	endpoint := fmt.Sprintf("http://%s:%d/", device.Addr, device.Port)
 
-	return &connection{device: device, endpoint: endpoint}
+	return &connection{device: device, endpoint: endpoint}, nil
 }
 
 func (c *connection) get(path string) (*http.Response, error) {

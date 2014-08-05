@@ -21,9 +21,12 @@ type Client struct {
 	connection *connection
 }
 
-func NewClient() *Client {
-	connection := newConnection()
-	return &Client{connection: connection}
+func NewClient() (*Client, error) {
+	connection, err := newConnection()
+	if err != nil {
+		return nil, err
+	}
+	return &Client{connection: connection}, nil
 }
 
 func (c *Client) Play(url string) <-chan error {
