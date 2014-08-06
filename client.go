@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"time"
 
 	"github.com/DHowett/go-plist"
@@ -38,7 +39,7 @@ func (c *Client) PlayAt(url string, position float32) <-chan error {
 	body := fmt.Sprintf("Content-Location: %s\nStart-Position: %f\n", url, position)
 
 	go func() {
-		if _, err := c.connection.post("play", "text/parameters", body); err != nil {
+		if _, err := c.connection.post("play", strings.NewReader(body)); err != nil {
 			ch <- err
 			return
 		}
@@ -72,7 +73,7 @@ func (c *Client) PlayAt(url string, position float32) <-chan error {
 }
 
 func (c *Client) Stop() {
-	c.connection.post("stop", "", "")
+	c.connection.post("stop", nil)
 }
 
 func (c *Client) GetPlayBackInfo() (*PlayBackInfo, error) {
