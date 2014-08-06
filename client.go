@@ -89,6 +89,11 @@ func (c *Client) Stop() {
 	c.connection.post("stop", nil)
 }
 
+func (c *Client) Scrub(position float32) {
+	query := fmt.Sprintf("?position=%f", position)
+	c.connection.post("scrub"+query, nil)
+}
+
 func (c *Client) Photo(path string) {
 	c.PhotoWithSlide(path, SlideNone)
 }

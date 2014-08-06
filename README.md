@@ -32,7 +32,17 @@ Specifying the start position:
 client.PlayAt("http://movie.example.com/go.mp4", 0.42)
 ```
 
-See [example/player](./example/player/main.go) :
+Seek specify seconds:
+
+```go
+// Seek to 120 seconds from start position.
+client.Scrub(120.0)
+```
+
+See:
+
+- [example/player](./example/player/main.go)
+- [example/seeker](./example/seeker/main.go)
 
 ### Images
 
@@ -52,6 +62,8 @@ client.Photo("/path/to/gopher.jpg", airplay.SlideDissolve)
 client.Photo("/path/to/gopher.jpg", airplay.SlideRight)
 client.Photo("/path/to/gopher.jpg", airplay.SlideLeft)
 ```
+
+See [example/slideshow](./example/slideshow/main.go) :
 
 ### Devices
 
