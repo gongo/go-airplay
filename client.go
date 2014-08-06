@@ -5,6 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
+	"net/http"
+	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -21,6 +25,15 @@ type PlayBackInfo struct {
 type Client struct {
 	connection *connection
 }
+
+type SlideTransition string
+
+const (
+	SlideNone     SlideTransition = "None"
+	SlideDissolve SlideTransition = "Dissolve"
+	SlideLeft     SlideTransition = "SlideLeft"
+	SlideRight    SlideTransition = "SlideRight"
+)
 
 func NewClient() (*Client, error) {
 	connection, err := newConnection()
@@ -76,6 +89,33 @@ func (c *Client) Stop() {
 	c.connection.post("stop", nil)
 }
 
+func (c *Client) Photo(path string) {
+	c.PhotoWithSlide(path, SlideNone)
+}
+
+func (c *Client) PhotoWithSlide(path string, transition SlideTransition) {
+	url, err := url.Parse(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var image *bytes.Reader
+
+	if url.Scheme == "http" || url.Scheme == "https" {
+		image, err = c.remoteImageReader(path)
+	} else {
+		image, err = c.localImageReader(path)
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	header := requestHeader{
+		"X-Apple-Transition": {string(transition)},
+	}
+	c.connection.postWithHeader("photo", image, header)
+}
+
 func (c *Client) GetPlayBackInfo() (*PlayBackInfo, error) {
 	response, err := c.connection.get("playback-info")
 	if err != nil {
@@ -117,4 +157,38 @@ func (c *Client) waitForReadyToPlay() error {
 			}
 		}
 	}
+}
+
+func (c *Client) localImageReader(path string) (*bytes.Reader, error) {
+	fn, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer fn.Close()
+
+	b, err := ioutil.ReadAll(fn)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes.NewReader(b), nil
+}
+
+func (c *Client) remoteImageReader(url string) (*bytes.Reader, error) {
+	response, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes.NewReader(body), nil
 }
