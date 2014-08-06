@@ -7,15 +7,13 @@ import (
 )
 
 type connection struct {
-	device   Device
-	endpoint string
+	device Device
 }
 
 type requestHeader http.Header
 
 func newConnection(device Device) *connection {
-	endpoint := fmt.Sprintf("http://%s:%d/", device.Addr, device.Port)
-	return &connection{device: device, endpoint: endpoint}
+	return &connection{device: device}
 }
 
 func (c *connection) get(path string) (*http.Response, error) {
@@ -35,7 +33,7 @@ func (c *connection) postWithHeader(path string, body io.Reader, header requestH
 }
 
 func (c *connection) request(method, path string, body io.Reader, header requestHeader) (*http.Response, error) {
-	req, err := http.NewRequest(method, c.endpoint+path, body)
+	req, err := http.NewRequest(method, c.endpoint()+path, body)
 	if err != nil {
 		return nil, err
 	}
@@ -48,4 +46,8 @@ func (c *connection) request(method, path string, body io.Reader, header request
 
 	client := &http.Client{}
 	return client.Do(req)
+}
+
+func (c *connection) endpoint() string {
+	return fmt.Sprintf("http://%s:%d/", c.device.Addr, c.device.Port)
 }
