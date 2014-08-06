@@ -14,7 +14,11 @@ Go bindings for AirPlay client
 ```go
 import "github.com/gongo/go-airplay"
 
-client := airplay.NewClient()
+client, err := airplay.NewClient()
+if err != nil {
+	log.Fatal(err)
+}
+
 ch := client.Play("http://movie.example.com/go.mp4")
 
 // Block until have played content to the end
@@ -29,6 +33,25 @@ client.PlayAt("http://movie.example.com/go.mp4", 0.42)
 ```
 
 See [example/player](./example/player/main.go) :
+
+### Images
+
+```go
+// local file
+client.Photo("/path/to/gopher.jpg")
+
+// remote file
+client.Photo("http://blog.golang.org/gopher/plush.jpg")
+```
+
+You can specify the transition want to slide:
+
+```go
+client.Photo("/path/to/gopher.jpg", airplay.SlideNone) // eq client.Photo("..")
+client.Photo("/path/to/gopher.jpg", airplay.SlideDissolve)
+client.Photo("/path/to/gopher.jpg", airplay.SlideRight)
+client.Photo("/path/to/gopher.jpg", airplay.SlideLeft)
+```
 
 ### Devices
 
