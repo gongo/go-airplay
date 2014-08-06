@@ -44,6 +44,11 @@ func NewClient() (*Client, error) {
 	return &Client{connection: newConnection(devices[0])}, nil
 }
 
+func NewClientHasDevice(device Device) (*Client, error) {
+	// TODO validation of device
+	return &Client{connection: newConnection(device)}, nil
+}
+
 func (c *Client) Play(url string) <-chan error {
 	return c.PlayAt(url, 0.0)
 }
