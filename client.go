@@ -36,11 +36,12 @@ const (
 )
 
 func NewClient() (*Client, error) {
-	connection, err := newConnection()
-	if err != nil {
-		return nil, err
+	devices := Devices()
+	if len(devices) == 0 {
+		return nil, errors.New("AirPlay devices not found")
 	}
-	return &Client{connection: connection}, nil
+
+	return &Client{connection: newConnection(devices[0])}, nil
 }
 
 func (c *Client) Play(url string) <-chan error {

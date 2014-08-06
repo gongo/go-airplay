@@ -1,7 +1,6 @@
 package airplay
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,17 +13,9 @@ type connection struct {
 
 type requestHeader http.Header
 
-func newConnection() (*connection, error) {
-	devices := Devices()
-
-	if len(devices) == 0 {
-		return nil, errors.New("AirPlay devices not found")
-	}
-
-	device := devices[0]
+func newConnection(device Device) *connection {
 	endpoint := fmt.Sprintf("http://%s:%d/", device.Addr, device.Port)
-
-	return &connection{device: device, endpoint: endpoint}, nil
+	return &connection{device: device, endpoint: endpoint}
 }
 
 func (c *connection) get(path string) (*http.Response, error) {
