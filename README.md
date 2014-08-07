@@ -1,6 +1,8 @@
 go-airplay
 ==========
 
+[![Build Status](https://travis-ci.org/gongo/go-airplay.svg?branch=master)](https://travis-ci.org/gongo/go-airplay)
+
 Go bindings for AirPlay client
 
 ## Requirements
