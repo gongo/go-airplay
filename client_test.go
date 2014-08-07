@@ -97,6 +97,22 @@ func TestPhotoRemoteFile(t *testing.T) {
 	client.Photo(remoteTs.URL)
 }
 
+func TestPhotoWithSlide(t *testing.T) {
+	remoteTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		body := []byte("remotefile")
+		w.Write(body)
+	}))
+
+	ts := airTestServer(t, "POST", "/photo", func(t *testing.T, w http.ResponseWriter, req *http.Request) {
+		if req.Header.Get("X-Apple-Transition") != "SlideRight" {
+			t.Errorf("Incorrect request header (actual = %s)", req.Header.Get("X-Apple-Transition"))
+		}
+	})
+
+	client := getTestClient(t, ts)
+	client.PhotoWithSlide(remoteTs.URL, SlideRight)
+}
+
 func airTestServer(t *testing.T, expectMethod, expectPath string, handler testHundelrFunc) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if req.Method != expectMethod || req.URL.Path != expectPath {
