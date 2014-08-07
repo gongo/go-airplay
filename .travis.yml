@@ -5,3 +5,6 @@ go:
 
 install:
   - go get github.com/armon/mdns
+  - go get github.com/DHowett/go-plist
+
+script: go test -v ./
