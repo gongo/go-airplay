@@ -1,9 +1,11 @@
 package airplay
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -39,6 +41,60 @@ func TestScrub(t *testing.T) {
 	})
 	client := getTestClient(t, ts)
 	client.Scrub(position)
+}
+
+func TestPhotoLocalFile(t *testing.T) {
+	dir := os.TempDir()
+
+	f, err := ioutil.TempFile(dir, "photo_test")
+	if err != nil {
+		t.Error(err)
+	}
+	defer f.Close()
+	defer os.Remove(f.Name())
+
+	f.WriteString("localfile")
+
+	ts := airTestServer(t, "POST", "/photo", func(t *testing.T, w http.ResponseWriter, req *http.Request) {
+		if req.Header.Get("X-Apple-Transition") != "None" {
+			t.Errorf("Incorrect request header (actual = %s)", req.Header.Get("X-Apple-Transition"))
+		}
+
+		bytes, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			t.Error(err)
+		}
+
+		body := string(bytes)
+		if body != "localfile" {
+			t.Errorf("Incorrect request body (actual = %s)", body)
+		}
+	})
+
+	client := getTestClient(t, ts)
+	client.Photo(f.Name())
+}
+
+func TestPhotoRemoteFile(t *testing.T) {
+	remoteTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		body := []byte("remotefile")
+		w.Write(body)
+	}))
+
+	ts := airTestServer(t, "POST", "/photo", func(t *testing.T, w http.ResponseWriter, req *http.Request) {
+		bytes, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			t.Error(err)
+		}
+
+		body := string(bytes)
+		if body != "remotefile" {
+			t.Errorf("Incorrect request body (actual = %s)", body)
+		}
+	})
+
+	client := getTestClient(t, ts)
+	client.Photo(remoteTs.URL)
 }
 
 func airTestServer(t *testing.T, expectMethod, expectPath string, handler testHundelrFunc) *httptest.Server {
