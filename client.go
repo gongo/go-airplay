@@ -95,7 +95,7 @@ func (c *Client) Stop() {
 	c.connection.post("stop", nil)
 }
 
-func (c *Client) Scrub(position float32) {
+func (c *Client) Scrub(position float64) {
 	query := fmt.Sprintf("?position=%f", position)
 	c.connection.post("scrub"+query, nil)
 }

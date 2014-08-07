@@ -30,5 +30,5 @@ func init() {
 
 func main() {
 	client, _ := airplay.NewClient()
-	client.Scrub(float32(opts.position))
+	client.Scrub(opts.position)
 }

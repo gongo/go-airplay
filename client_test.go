@@ -38,7 +38,7 @@ func TestScrub(t *testing.T) {
 		}
 	})
 	client := getTestClient(t, ts)
-	client.Scrub(float32(position))
+	client.Scrub(position)
 }
 
 func airTestServer(t *testing.T, expectMethod, expectPath string, handler testHundelrFunc) *httptest.Server {
