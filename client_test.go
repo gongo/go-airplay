@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -47,6 +48,87 @@ var (
 </dict>
 </plist>`
 )
+
+func TestPost(t *testing.T) {
+	expectRequests := []testExpectRequest{
+		{"POST", "/play"},
+		{"GET", "/playback-info"},
+		{"GET", "/playback-info"},
+		{"GET", "/playback-info"},
+	}
+	responseXMLs := []string{
+		stopPlayBackInfo,
+		playingPlayBackInfo,
+		stopPlayBackInfo,
+	}
+
+	ts := airTestServer(t, expectRequests, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path == "/play" {
+			bytes, err := ioutil.ReadAll(req.Body)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			result, _ := regexp.Match("Content-Location: http://movie.example.com/go.mp4", bytes)
+			if !result {
+				t.Fatalf("Incorrect request location (actual %s)", string(bytes))
+			}
+
+			result, _ = regexp.Match("Start-Position: 0.0", bytes)
+			if !result {
+				t.Fatalf("Incorrect request position (actual %s)", string(bytes))
+			}
+		}
+
+		if req.URL.Path == "/playback-info" {
+			xml := responseXMLs[0]
+			responseXMLs = responseXMLs[1:]
+			w.Write([]byte(xml))
+		}
+	})
+
+	client := getTestClient(t, ts)
+	ch := client.Play("http://movie.example.com/go.mp4")
+	<-ch
+}
+
+func TestPostAt(t *testing.T) {
+	expectRequests := []testExpectRequest{
+		{"POST", "/play"},
+		{"GET", "/playback-info"},
+		{"GET", "/playback-info"},
+		{"GET", "/playback-info"},
+	}
+	responseXMLs := []string{
+		stopPlayBackInfo,
+		playingPlayBackInfo,
+		stopPlayBackInfo,
+	}
+
+	ts := airTestServer(t, expectRequests, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path == "/play" {
+			bytes, err := ioutil.ReadAll(req.Body)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			result, _ := regexp.Match("Start-Position: 12.3", bytes)
+			if !result {
+				t.Fatalf("Incorrect request position (actual %s)", string(bytes))
+			}
+		}
+
+		if req.URL.Path == "/playback-info" {
+			xml := responseXMLs[0]
+			responseXMLs = responseXMLs[1:]
+			w.Write([]byte(xml))
+		}
+	})
+
+	client := getTestClient(t, ts)
+	ch := client.PlayAt("http://movie.example.com/go.mp4", 12.3)
+	<-ch
+}
 
 func TestStop(t *testing.T) {
 	ts := airTestServer(t, []testExpectRequest{{"POST", "/stop"}}, nil)
