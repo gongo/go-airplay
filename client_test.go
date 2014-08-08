@@ -22,6 +22,32 @@ func (e testExpectRequest) isMatch(method, path string) bool {
 	return (e.method == method && e.path == path)
 }
 
+var (
+	stopPlayBackInfo = `
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>readyToPlay</key>
+	<false/>
+	<key>uuid</key>
+	<string>AAAAA-BBBBB-CCCCC-DDDDD-EEEEE</string>
+</dict>
+</plist>`
+
+	playingPlayBackInfo = `
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>duration</key>
+	<real>36.00000</real>
+	<key>position</key>
+	<real>18.00000</real>
+	<key>readyToPlay</key>
+	<true/>
+</dict>
+</plist>`
+)
+
 func TestStop(t *testing.T) {
 	ts := airTestServer(t, []testExpectRequest{{"POST", "/stop"}}, nil)
 	client := getTestClient(t, ts)
@@ -118,6 +144,40 @@ func TestPhotoWithSlide(t *testing.T) {
 
 	client := getTestClient(t, ts)
 	client.PhotoWithSlide(remoteTs.URL, SlideRight)
+}
+
+func TestGetPlayBackInfo(t *testing.T) {
+	expectRequests := []testExpectRequest{
+		{"GET", "/playback-info"},
+		{"GET", "/playback-info"},
+	}
+	responseXMLs := []string{stopPlayBackInfo, playingPlayBackInfo}
+
+	ts := airTestServer(t, expectRequests, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
+		xml := responseXMLs[0]
+		responseXMLs = responseXMLs[1:]
+		w.Write([]byte(xml))
+	})
+
+	client := getTestClient(t, ts)
+
+	info, err := client.GetPlayBackInfo()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if info.IsReadyToPlay {
+		t.Fatal("PlayBackInfo is not ready to play status")
+	}
+
+	info, err = client.GetPlayBackInfo()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if info.Duration != 36.0 || info.Position != 18.0 {
+		t.Fatal("Incorrect PlayBackInfo")
+	}
 }
 
 func airTestServer(t *testing.T, requests []testExpectRequest, handler testHundelrFunc) *httptest.Server {
