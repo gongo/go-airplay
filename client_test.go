@@ -34,18 +34,16 @@ func TestScrub(t *testing.T) {
 		values := req.URL.Query()
 		positionString := values.Get("position")
 		if positionString == "" {
-			t.Error("Not found query parameter `position`")
+			t.Fatal("Not found query parameter `position`")
 		}
 
 		positionFloat, err := strconv.ParseFloat(positionString, 64)
 		if err != nil {
-			t.Error("Incorrect query parameter `position` (actual = %s)", positionString)
-			return
+			t.Fatal("Incorrect query parameter `position` (actual = %s)", positionString)
 		}
 
 		if positionFloat != position {
-			t.Errorf("Incorrect query parameter `position` (actual = %f)", positionFloat)
-			return
+			t.Fatalf("Incorrect query parameter `position` (actual = %f)", positionFloat)
 		}
 	})
 	client := getTestClient(t, ts)
@@ -57,7 +55,7 @@ func TestPhotoLocalFile(t *testing.T) {
 
 	f, err := ioutil.TempFile(dir, "photo_test")
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	defer f.Close()
 	defer os.Remove(f.Name())
@@ -66,17 +64,17 @@ func TestPhotoLocalFile(t *testing.T) {
 
 	ts := airTestServer(t, []testExpectRequest{{"POST", "/photo"}}, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
 		if req.Header.Get("X-Apple-Transition") != "None" {
-			t.Errorf("Incorrect request header (actual = %s)", req.Header.Get("X-Apple-Transition"))
+			t.Fatalf("Incorrect request header (actual = %s)", req.Header.Get("X-Apple-Transition"))
 		}
 
 		bytes, err := ioutil.ReadAll(req.Body)
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 
 		body := string(bytes)
 		if body != "localfile" {
-			t.Errorf("Incorrect request body (actual = %s)", body)
+			t.Fatalf("Incorrect request body (actual = %s)", body)
 		}
 	})
 
@@ -93,12 +91,12 @@ func TestPhotoRemoteFile(t *testing.T) {
 	ts := airTestServer(t, []testExpectRequest{{"POST", "/photo"}}, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
 		bytes, err := ioutil.ReadAll(req.Body)
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 
 		body := string(bytes)
 		if body != "remotefile" {
-			t.Errorf("Incorrect request body (actual = %s)", body)
+			t.Fatalf("Incorrect request body (actual = %s)", body)
 		}
 	})
 
@@ -114,7 +112,7 @@ func TestPhotoWithSlide(t *testing.T) {
 
 	ts := airTestServer(t, []testExpectRequest{{"POST", "/photo"}}, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
 		if req.Header.Get("X-Apple-Transition") != "SlideRight" {
-			t.Errorf("Incorrect request header (actual = %s)", req.Header.Get("X-Apple-Transition"))
+			t.Fatalf("Incorrect request header (actual = %s)", req.Header.Get("X-Apple-Transition"))
 		}
 	})
 
@@ -125,17 +123,15 @@ func TestPhotoWithSlide(t *testing.T) {
 func airTestServer(t *testing.T, requests []testExpectRequest, handler testHundelrFunc) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if len(requests) == 0 {
-			t.Error("Incorrect request count")
-			return
+			t.Fatal("Incorrect request count")
 		}
 
 		expect := requests[0]
 		requests = requests[1:]
 
 		if !expect.isMatch(req.Method, req.URL.Path) {
-			t.Errorf("request is not '%s %s' (actual = %s %s)",
+			t.Fatalf("request is not '%s %s' (actual = %s %s)",
 				expect.method, expect.path, req.Method, req.URL.Path)
-			return
 		}
 
 		if handler != nil {
@@ -152,7 +148,7 @@ func getTestClient(t *testing.T, ts *httptest.Server) *Client {
 	}
 	client, err := NewClientHasDevice(device)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	return client
@@ -161,14 +157,14 @@ func getTestClient(t *testing.T, ts *httptest.Server) *Client {
 func getAddrAndPort(t *testing.T, host string) (string, int) {
 	u, err := url.Parse(host)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	split := strings.Split(u.Host, ":")
 	addr := split[0]
 	port, err := strconv.Atoi(split[1])
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	return addr, port
