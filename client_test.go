@@ -13,15 +13,24 @@ import (
 
 type testHundelrFunc func(*testing.T, http.ResponseWriter, *http.Request)
 
+type testExpectRequest struct {
+	method string
+	path   string
+}
+
+func (e testExpectRequest) isMatch(method, path string) bool {
+	return (e.method == method && e.path == path)
+}
+
 func TestStop(t *testing.T) {
-	ts := airTestServer(t, "POST", "/stop", nil)
+	ts := airTestServer(t, []testExpectRequest{{"POST", "/stop"}}, nil)
 	client := getTestClient(t, ts)
 	client.Stop()
 }
 
 func TestScrub(t *testing.T) {
 	position := 12.345
-	ts := airTestServer(t, "POST", "/scrub", func(t *testing.T, w http.ResponseWriter, req *http.Request) {
+	ts := airTestServer(t, []testExpectRequest{{"POST", "/scrub"}}, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
 		values := req.URL.Query()
 		positionString := values.Get("position")
 		if positionString == "" {
@@ -55,7 +64,7 @@ func TestPhotoLocalFile(t *testing.T) {
 
 	f.WriteString("localfile")
 
-	ts := airTestServer(t, "POST", "/photo", func(t *testing.T, w http.ResponseWriter, req *http.Request) {
+	ts := airTestServer(t, []testExpectRequest{{"POST", "/photo"}}, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
 		if req.Header.Get("X-Apple-Transition") != "None" {
 			t.Errorf("Incorrect request header (actual = %s)", req.Header.Get("X-Apple-Transition"))
 		}
@@ -81,7 +90,7 @@ func TestPhotoRemoteFile(t *testing.T) {
 		w.Write(body)
 	}))
 
-	ts := airTestServer(t, "POST", "/photo", func(t *testing.T, w http.ResponseWriter, req *http.Request) {
+	ts := airTestServer(t, []testExpectRequest{{"POST", "/photo"}}, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
 		bytes, err := ioutil.ReadAll(req.Body)
 		if err != nil {
 			t.Error(err)
@@ -103,7 +112,7 @@ func TestPhotoWithSlide(t *testing.T) {
 		w.Write(body)
 	}))
 
-	ts := airTestServer(t, "POST", "/photo", func(t *testing.T, w http.ResponseWriter, req *http.Request) {
+	ts := airTestServer(t, []testExpectRequest{{"POST", "/photo"}}, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
 		if req.Header.Get("X-Apple-Transition") != "SlideRight" {
 			t.Errorf("Incorrect request header (actual = %s)", req.Header.Get("X-Apple-Transition"))
 		}
@@ -113,11 +122,19 @@ func TestPhotoWithSlide(t *testing.T) {
 	client.PhotoWithSlide(remoteTs.URL, SlideRight)
 }
 
-func airTestServer(t *testing.T, expectMethod, expectPath string, handler testHundelrFunc) *httptest.Server {
+func airTestServer(t *testing.T, requests []testExpectRequest, handler testHundelrFunc) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.Method != expectMethod || req.URL.Path != expectPath {
+		if len(requests) == 0 {
+			t.Error("Incorrect request count")
+			return
+		}
+
+		expect := requests[0]
+		requests = requests[1:]
+
+		if !expect.isMatch(req.Method, req.URL.Path) {
 			t.Errorf("request is not '%s %s' (actual = %s %s)",
-				expectMethod, expectPath, req.Method, req.URL.Path)
+				expect.method, expect.path, req.Method, req.URL.Path)
 			return
 		}
 
