@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -113,9 +114,9 @@ func (c *Client) PhotoWithSlide(path string, transition SlideTransition) {
 	var image *bytes.Reader
 
 	if url.Scheme == "http" || url.Scheme == "https" {
-		image, err = c.remoteImageReader(path)
+		image, err = remoteImageReader(path)
 	} else {
-		image, err = c.localImageReader(path)
+		image, err = localImageReader(path)
 	}
 	if err != nil {
 		log.Fatal(err)
@@ -134,12 +135,12 @@ func (c *Client) GetPlayBackInfo() (*PlayBackInfo, error) {
 	}
 	defer response.Body.Close()
 
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := convertBytesReader(response.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	decoder := plist.NewDecoder(bytes.NewReader(body))
+	decoder := plist.NewDecoder(body)
 	info := &PlayBackInfo{}
 	if err := decoder.Decode(info); err != nil {
 		return nil, err
@@ -170,33 +171,28 @@ func (c *Client) waitForReadyToPlay() error {
 	}
 }
 
-func (c *Client) localImageReader(path string) (*bytes.Reader, error) {
+func localImageReader(path string) (*bytes.Reader, error) {
 	fn, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer fn.Close()
 
-	b, err := ioutil.ReadAll(fn)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewReader(b), nil
+	return convertBytesReader(fn)
 }
 
-func (c *Client) remoteImageReader(url string) (*bytes.Reader, error) {
+func remoteImageReader(url string) (*bytes.Reader, error) {
 	response, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-
 	if err != nil {
 		return nil, err
 	}
 	defer response.Body.Close()
 
-	body, err := ioutil.ReadAll(response.Body)
+	return convertBytesReader(response.Body)
+}
+
+func convertBytesReader(r io.Reader) (*bytes.Reader, error) {
+	body, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
