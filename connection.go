@@ -38,11 +38,7 @@ func (c *connection) request(method, path string, body io.Reader, header request
 		return nil, err
 	}
 
-	for key, values := range header {
-		for _, vv := range values {
-			req.Header.Add(key, vv)
-		}
-	}
+	req.Header = http.Header(header)
 
 	client := &http.Client{}
 	return client.Do(req)

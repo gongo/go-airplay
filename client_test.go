@@ -97,10 +97,8 @@ func TestPostAt(t *testing.T) {
 		{"POST", "/play"},
 		{"GET", "/playback-info"},
 		{"GET", "/playback-info"},
-		{"GET", "/playback-info"},
 	}
 	responseXMLs := []string{
-		stopPlayBackInfo,
 		playingPlayBackInfo,
 		stopPlayBackInfo,
 	}
