@@ -17,11 +17,20 @@ func Devices() []Device {
 
 	go func() {
 		for entry := range entriesCh {
+			ip := entry.Addr
+			var addr string
+
+			if ip.To16() != nil {
+				addr = "[" + ip.String() + "]"
+			} else {
+				addr = ip.String()
+			}
+
 			devices = append(
 				devices,
 				Device{
 					Name: entry.Name,
-					Addr: entry.Addr.String(),
+					Addr: addr,
 					Port: entry.Port,
 				},
 			)
