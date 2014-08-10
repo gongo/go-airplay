@@ -101,6 +101,11 @@ func (c *Client) Scrub(position float64) {
 	c.connection.post("scrub"+query, nil)
 }
 
+func (c *Client) Rate(rate float64) {
+	query := fmt.Sprintf("?value=%f", rate)
+	c.connection.post("rate"+query, nil)
+}
+
 func (c *Client) Photo(path string) {
 	c.PhotoWithSlide(path, SlideNone)
 }

@@ -156,6 +156,27 @@ func TestScrub(t *testing.T) {
 	client.Scrub(position)
 }
 
+func TestRate(t *testing.T) {
+	rate := 0.8
+	ts := airTestServer(t, []testExpectRequest{{"POST", "/rate"}}, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
+		rateString := req.URL.Query().Get("value")
+		if rateString == "" {
+			t.Fatal("Not found query parameter `value`")
+		}
+
+		rateFloat, err := strconv.ParseFloat(rateString, 64)
+		if err != nil {
+			t.Fatal("Incorrect query parameter `value` (actual = %s)", rateString)
+		}
+
+		if rateFloat != rate {
+			t.Fatalf("Incorrect query parameter `value` (actual = %f)", rateFloat)
+		}
+	})
+	client := getTestClient(t, ts)
+	client.Rate(rate)
+}
+
 func TestPhotoLocalFile(t *testing.T) {
 	dir := os.TempDir()
 

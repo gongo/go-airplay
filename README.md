@@ -34,11 +34,15 @@ Specifying the start position:
 client.PlayAt("http://movie.example.com/go.mp4", 0.42)
 ```
 
-Seek specify seconds:
+Other API:
 
 ```go
 // Seek to 120 seconds from start position.
 client.Scrub(120.0)
+
+// Change playback rate
+client.Rate(0.0) // pause
+client.Rate(1.0) // resume
 ```
 
 See:
