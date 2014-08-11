@@ -1,7 +1,9 @@
 go-airplay
 ==========
 
-[![Build Status](https://travis-ci.org/gongo/go-airplay.svg?branch=master)](https://travis-ci.org/gongo/go-airplay) [![Coverage Status](https://coveralls.io/repos/gongo/go-airplay/badge.png?branch=master)](https://coveralls.io/r/gongo/go-airplay?branch=master)
+[![GoDoc](http://godoc.org/github.com/gongo/go-airplay?status.svg)](http://godoc.org/github.com/gongo/go-airplay)
+[![Build Status](https://travis-ci.org/gongo/go-airplay.svg?branch=master)](https://travis-ci.org/gongo/go-airplay)
+[![Coverage Status](https://coveralls.io/repos/gongo/go-airplay/badge.png?branch=master)](https://coveralls.io/r/gongo/go-airplay?branch=master)
 
 Go bindings for AirPlay client
 
