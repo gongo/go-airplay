@@ -85,7 +85,7 @@ func (c *Client) PlayAt(url string, position float64) <-chan error {
 		interval := time.Tick(time.Second)
 
 		for {
-			info, err := c.GetPlayBackInfo()
+			info, err := c.GetPlaybackInfo()
 
 			if err != nil {
 				ch <- err
@@ -163,8 +163,8 @@ func (c *Client) PhotoWithSlide(path string, transition SlideTransition) {
 	c.connection.postWithHeader("photo", image, header)
 }
 
-// GetPlayBackInfo retrieves playback informations.
-func (c *Client) GetPlayBackInfo() (*PlayBackInfo, error) {
+// GetPlaybackInfo retrieves playback informations.
+func (c *Client) GetPlaybackInfo() (*PlayBackInfo, error) {
 	response, err := c.connection.get("playback-info")
 	if err != nil {
 		return nil, err
@@ -194,7 +194,7 @@ func (c *Client) waitForReadyToPlay() error {
 		case <-timeout:
 			return errors.New("timeout while waiting for ready to play")
 		case <-interval:
-			info, err := c.GetPlayBackInfo()
+			info, err := c.GetPlaybackInfo()
 
 			if err != nil {
 				return err

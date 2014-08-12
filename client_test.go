@@ -247,7 +247,7 @@ func TestPhotoWithSlide(t *testing.T) {
 	client.PhotoWithSlide(remoteTs.URL, SlideRight)
 }
 
-func TestGetPlayBackInfo(t *testing.T) {
+func TestGetPlaybackInfo(t *testing.T) {
 	expectRequests := []testExpectRequest{
 		{"GET", "/playback-info"},
 		{"GET", "/playback-info"},
@@ -262,7 +262,7 @@ func TestGetPlayBackInfo(t *testing.T) {
 
 	client := getTestClient(t, ts)
 
-	info, err := client.GetPlayBackInfo()
+	info, err := client.GetPlaybackInfo()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -271,7 +271,7 @@ func TestGetPlayBackInfo(t *testing.T) {
 		t.Fatal("PlayBackInfo is not ready to play status")
 	}
 
-	info, err = client.GetPlayBackInfo()
+	info, err = client.GetPlaybackInfo()
 	if err != nil {
 		t.Fatal(err)
 	}
