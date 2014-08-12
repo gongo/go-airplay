@@ -32,6 +32,7 @@ type Client struct {
 	connection *connection
 }
 
+// SlideTransition represents transition that used when show the picture.
 type SlideTransition string
 
 const (
@@ -55,10 +56,17 @@ func NewClientHasDevice(device Device) (*Client, error) {
 	return &Client{connection: newConnection(device)}, nil
 }
 
+// Play start content playback.
+//
+// When playback is finished, sends termination status on the returned channel.
+// If non-nil, not a successful termination.
 func (c *Client) Play(url string) <-chan error {
 	return c.PlayAt(url, 0.0)
 }
 
+// PlayAt start content playback by specifying the start position.
+//
+// Returned channel is the same as Play().
 func (c *Client) PlayAt(url string, position float64) <-chan error {
 	ch := make(chan error, 1)
 	body := fmt.Sprintf("Content-Location: %s\nStart-Position: %f\n", url, position)
@@ -97,24 +105,41 @@ func (c *Client) PlayAt(url string, position float64) <-chan error {
 	return ch
 }
 
+// Stop exits content playback.
 func (c *Client) Stop() {
 	c.connection.post("stop", nil)
 }
 
+// Scrub seeks at position seconds in playing content.
 func (c *Client) Scrub(position float64) {
 	query := fmt.Sprintf("?position=%f", position)
 	c.connection.post("scrub"+query, nil)
 }
 
+// Rate change the playback rate in playing content.
+//
+// If rate is 0, content is paused.
+// if rate is 1, content playing at the normal speed.
 func (c *Client) Rate(rate float64) {
 	query := fmt.Sprintf("?value=%f", rate)
 	c.connection.post("rate"+query, nil)
 }
 
+// Photo show a JPEG picture. It can specify both remote or local file.
+//
+// A trivial example:
+//
+//     // local file
+//     client.Photo("/path/to/gopher.jpg")
+//
+//     // remote file
+//     client.Photo("http://blog.golang.org/gopher/plush.jpg")
+//
 func (c *Client) Photo(path string) {
 	c.PhotoWithSlide(path, SlideNone)
 }
 
+// PhotoWithSlide show a JPEG picture in the transition specified.
 func (c *Client) PhotoWithSlide(path string, transition SlideTransition) {
 	url, err := url.Parse(path)
 	if err != nil {
@@ -138,6 +163,7 @@ func (c *Client) PhotoWithSlide(path string, transition SlideTransition) {
 	c.connection.postWithHeader("photo", image, header)
 }
 
+// GetPlayBackInfo retrieves playback informations.
 func (c *Client) GetPlayBackInfo() (*PlayBackInfo, error) {
 	response, err := c.connection.get("playback-info")
 	if err != nil {
