@@ -16,8 +16,8 @@ import (
 	"github.com/DHowett/go-plist"
 )
 
-// A PlayBackInfo is a playback information of playing content.
-type PlayBackInfo struct {
+// A PlaybackInfo is a playback information of playing content.
+type PlaybackInfo struct {
 	// IsReadyToPlay, if true, content is currently playing or ready to play.
 	IsReadyToPlay bool `plist:"readyToPlay"`
 
@@ -164,7 +164,7 @@ func (c *Client) PhotoWithSlide(path string, transition SlideTransition) {
 }
 
 // GetPlaybackInfo retrieves playback informations.
-func (c *Client) GetPlaybackInfo() (*PlayBackInfo, error) {
+func (c *Client) GetPlaybackInfo() (*PlaybackInfo, error) {
 	response, err := c.connection.get("playback-info")
 	if err != nil {
 		return nil, err
@@ -177,7 +177,7 @@ func (c *Client) GetPlaybackInfo() (*PlayBackInfo, error) {
 	}
 
 	decoder := plist.NewDecoder(body)
-	info := &PlayBackInfo{}
+	info := &PlaybackInfo{}
 	if err := decoder.Decode(info); err != nil {
 		return nil, err
 	}

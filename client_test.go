@@ -24,7 +24,7 @@ func (e testExpectRequest) isMatch(method, path string) bool {
 }
 
 var (
-	stopPlayBackInfo = `
+	stopPlaybackInfo = `
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -35,7 +35,7 @@ var (
 </dict>
 </plist>`
 
-	playingPlayBackInfo = `
+	playingPlaybackInfo = `
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -57,9 +57,9 @@ func TestPost(t *testing.T) {
 		{"GET", "/playback-info"},
 	}
 	responseXMLs := []string{
-		stopPlayBackInfo,
-		playingPlayBackInfo,
-		stopPlayBackInfo,
+		stopPlaybackInfo,
+		playingPlaybackInfo,
+		stopPlaybackInfo,
 	}
 
 	ts := airTestServer(t, expectRequests, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
@@ -99,8 +99,8 @@ func TestPostAt(t *testing.T) {
 		{"GET", "/playback-info"},
 	}
 	responseXMLs := []string{
-		playingPlayBackInfo,
-		stopPlayBackInfo,
+		playingPlaybackInfo,
+		stopPlaybackInfo,
 	}
 
 	ts := airTestServer(t, expectRequests, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
@@ -252,7 +252,7 @@ func TestGetPlaybackInfo(t *testing.T) {
 		{"GET", "/playback-info"},
 		{"GET", "/playback-info"},
 	}
-	responseXMLs := []string{stopPlayBackInfo, playingPlayBackInfo}
+	responseXMLs := []string{stopPlaybackInfo, playingPlaybackInfo}
 
 	ts := airTestServer(t, expectRequests, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
 		xml := responseXMLs[0]
@@ -268,7 +268,7 @@ func TestGetPlaybackInfo(t *testing.T) {
 	}
 
 	if info.IsReadyToPlay {
-		t.Fatal("PlayBackInfo is not ready to play status")
+		t.Fatal("PlaybackInfo is not ready to play status")
 	}
 
 	info, err = client.GetPlaybackInfo()
@@ -277,7 +277,7 @@ func TestGetPlaybackInfo(t *testing.T) {
 	}
 
 	if info.Duration != 36.0 || info.Position != 18.0 {
-		t.Fatal("Incorrect PlayBackInfo")
+		t.Fatal("Incorrect PlaybackInfo")
 	}
 }
 
