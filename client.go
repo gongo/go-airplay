@@ -18,9 +18,14 @@ import (
 
 // A PlayBackInfo is a playback information of playing content.
 type PlayBackInfo struct {
-	IsReadyToPlay bool    `plist:"readyToPlay"`
-	Duration      float32 `plist:"duration"`
-	Position      float32 `plist:"position"`
+	// IsReadyToPlay, if true, content is currently playing or ready to play.
+	IsReadyToPlay bool `plist:"readyToPlay"`
+
+	// Duration represents playback duration in seconds.
+	Duration float64 `plist:"duration"`
+
+	// Position represents playback position in seconds.
+	Position float64 `plist:"position"`
 }
 
 type Client struct {
@@ -54,7 +59,7 @@ func (c *Client) Play(url string) <-chan error {
 	return c.PlayAt(url, 0.0)
 }
 
-func (c *Client) PlayAt(url string, position float32) <-chan error {
+func (c *Client) PlayAt(url string, position float64) <-chan error {
 	ch := make(chan error, 1)
 	body := fmt.Sprintf("Content-Location: %s\nStart-Position: %f\n", url, position)
 

@@ -47,13 +47,13 @@ func airplayClient() *airplay.Client {
 
 func playToEnd() {
 	client := airplayClient()
-	ch := client.PlayAt(opts.mediaURL, float32(opts.startingPosition))
+	ch := client.PlayAt(opts.mediaURL, opts.startingPosition)
 	<-ch
 }
 
 func playUntilTimeoutOrEnd() {
 	client := airplayClient()
-	ch := client.PlayAt(opts.mediaURL, float32(opts.startingPosition))
+	ch := client.PlayAt(opts.mediaURL, opts.startingPosition)
 	timeout := time.After(time.Duration(opts.playTimeout) * time.Second)
 
 	select {
