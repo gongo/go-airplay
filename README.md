@@ -7,10 +7,6 @@ go-airplay
 
 Go bindings for AirPlay client
 
-## Requirements
-
-- [github.com/armon/mdns](https://github.com/armon/mdns)
-
 ## Usage
 
 ### Videos
