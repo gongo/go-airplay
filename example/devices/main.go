@@ -16,7 +16,7 @@ func main() {
 		table.Append([]string{
 			device.Name,
 			device.Addr,
-			strconv.Itoa(device.Port),
+			strconv.Itoa(int(device.Port)),
 		})
 	}
 

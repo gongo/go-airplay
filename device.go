@@ -1,7 +1,5 @@
 package airplay
 
-import "github.com/armon/mdns"
-
 // A Device is an AirPlay Device.
 type Device struct {
 	Name string
@@ -12,32 +10,32 @@ type Device struct {
 // Devices returns all AirPlay devices in LAN.
 func Devices() []Device {
 	devices := []Device{}
-	entriesCh := make(chan *mdns.ServiceEntry, 4)
-	defer close(entriesCh)
 
-	go func() {
-		for entry := range entriesCh {
-			ip := entry.Addr
-			var addr string
-
-			if ip.To16() != nil {
-				addr = "[" + ip.String() + "]"
-			} else {
-				addr = ip.String()
-			}
-
-			devices = append(
-				devices,
-				Device{
-					Name: entry.Name,
-					Addr: addr,
-					Port: entry.Port,
-				},
-			)
-		}
-	}()
-
-	mdns.Lookup("_airplay._tcp", entriesCh)
+	for _, entry := range searchEntry(&queryParam{}) {
+		devices = append(
+			devices,
+			entryToDevice(entry),
+		)
+	}
 
 	return devices
+}
+
+// FirstDevice return the first AirPlay device in LAN it is found.
+func FirstDevice() Device {
+	params := &queryParam{maxCount: 1}
+
+	for _, entry := range searchEntry(params) {
+		return entryToDevice(entry)
+	}
+
+	return Device{}
+}
+
+func entryToDevice(entry *entry) Device {
+	return Device{
+		Name: entry.hostName,
+		Addr: entry.ipv4.String(),
+		Port: int(entry.port),
+	}
 }

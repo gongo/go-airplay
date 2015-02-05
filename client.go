@@ -43,12 +43,12 @@ const (
 )
 
 func NewClient() (*Client, error) {
-	devices := Devices()
-	if len(devices) == 0 {
+	device := FirstDevice()
+	if device.Name == "" {
 		return nil, errors.New("AirPlay devices not found")
 	}
 
-	return &Client{connection: newConnection(devices[0])}, nil
+	return &Client{connection: newConnection(device)}, nil
 }
 
 func NewClientHasDevice(device Device) (*Client, error) {
