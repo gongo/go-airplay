@@ -3,6 +3,7 @@ package airplay
 // discovery.go was created in reference to github.com/armon/mdns/client.go
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"time"
@@ -20,17 +21,18 @@ var (
 		IP:   net.ParseIP(mdnsAddr),
 		Port: mdnsPort,
 	}
+	searchDomain = "_airplay._tcp.local."
 )
 
 type discovery struct {
-	conn     *net.UDPConn
+	mconn    *net.UDPConn
+	uconn    *net.UDPConn
 	closed   bool
 	closedCh chan int
 }
 
 type entry struct {
 	ipv4       net.IP
-	ipv6       net.IP
 	port       int
 	hostName   string
 	domainName string
@@ -42,13 +44,19 @@ type queryParam struct {
 }
 
 func newDiscovery() (*discovery, error) {
-	conn, err := net.ListenMulticastUDP("udp4", nil, mdnsUDPAddr)
+	mconn, err := net.ListenMulticastUDP("udp4", nil, mdnsUDPAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	uconn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4zero, Port: 0})
 	if err != nil {
 		return nil, err
 	}
 
 	d := &discovery{
-		conn:     conn,
+		mconn:    mconn,
+		uconn:    uconn,
 		closed:   false,
 		closedCh: make(chan int),
 	}
@@ -63,7 +71,7 @@ func searchEntry(params *queryParam) []*entry {
 		params.timeout = 1 * time.Second
 	}
 
-	if params.maxCount == 0 {
+	if params.maxCount <= 0 {
 		params.maxCount = 5
 	}
 
@@ -73,12 +81,13 @@ func searchEntry(params *queryParam) []*entry {
 func (d *discovery) query(params *queryParam) []*entry {
 	// Send question
 	m := new(dns.Msg)
-	m.SetQuestion("_airplay._tcp.local.", dns.TypePTR)
+	m.SetQuestion(searchDomain, dns.TypePTR)
 	buf, _ := m.Pack()
-	d.conn.WriteToUDP(buf, mdnsUDPAddr)
+	d.uconn.WriteToUDP(buf, mdnsUDPAddr)
 
-	msgCh := make(chan *dns.Msg, 4)
-	go d.receive(msgCh)
+	msgCh := make(chan *dns.Msg, 8)
+	go d.receive(d.uconn, msgCh)
+	go d.receive(d.mconn, msgCh)
 
 	entries := []*entry{}
 	finish := time.After(params.timeout)
@@ -87,8 +96,14 @@ L:
 	for {
 		select {
 		case response := <-msgCh:
-			entry := parse(response)
-			if entry == nil {
+			// Ignore question message
+			if !response.MsgHdr.Response {
+				continue
+			}
+
+			entry, err := d.parse(response)
+			if err != nil {
+				fmt.Println(err)
 				continue
 			}
 			entries = append(entries, entry)
@@ -105,16 +120,21 @@ L:
 }
 
 func (d *discovery) close() {
+	if d.closed {
+		return
+	}
 	d.closed = true
+
 	close(d.closedCh)
-	d.conn.Close()
+	d.uconn.Close()
+	d.mconn.Close()
 }
 
-func (d *discovery) receive(ch chan *dns.Msg) {
+func (d *discovery) receive(l *net.UDPConn, ch chan *dns.Msg) {
 	buf := make([]byte, dns.DefaultMsgSize)
 
 	for !d.closed {
-		n, _, err := d.conn.ReadFromUDP(buf)
+		n, _, err := l.ReadFromUDP(buf)
 		if err != nil {
 			log.Println(err)
 			continue
@@ -134,7 +154,7 @@ func (d *discovery) receive(ch chan *dns.Msg) {
 	}
 }
 
-func parse(resp *dns.Msg) *entry {
+func (d *discovery) parse(resp *dns.Msg) (*entry, error) {
 	entry := new(entry)
 
 	for _, answer := range resp.Answer {
@@ -145,8 +165,7 @@ func parse(resp *dns.Msg) *entry {
 	}
 
 	if entry.domainName == "" {
-		log.Println("airplay: [ERR] Failed to get PTR record")
-		return nil
+		return nil, NewDNSResponseParseError("PTR", resp.Answer)
 	}
 
 	for _, extra := range resp.Extra {
@@ -160,8 +179,7 @@ func parse(resp *dns.Msg) *entry {
 	}
 
 	if entry.hostName == "" {
-		log.Println("airplay: [ERR] Failed to get SRV record")
-		return nil
+		return nil, NewDNSResponseParseError("SRV", resp.Extra)
 	}
 
 	for _, extra := range resp.Extra {
@@ -170,12 +188,12 @@ func parse(resp *dns.Msg) *entry {
 			if rr.Hdr.Name == entry.hostName {
 				entry.ipv4 = rr.A
 			}
-		case *dns.AAAA:
-			if rr.Hdr.Name == entry.hostName {
-				entry.ipv6 = rr.AAAA
-			}
 		}
 	}
 
-	return entry
+	if entry.ipv4.String() == "<nil>" {
+		return nil, NewDNSResponseParseError("A", resp.Extra)
+	}
+
+	return entry, nil
 }
