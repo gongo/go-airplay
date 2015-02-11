@@ -42,7 +42,12 @@ const (
 	SlideRight    SlideTransition = "SlideRight"
 )
 
-func NewClient() (*Client, error) {
+type ClientParam struct {
+	Addr string
+	Port int
+}
+
+func DefaultClient() (*Client, error) {
 	device := FirstDevice()
 	if device.Name == "" {
 		return nil, errors.New("AirPlay devices not found")
@@ -51,9 +56,25 @@ func NewClient() (*Client, error) {
 	return &Client{connection: newConnection(device)}, nil
 }
 
-func NewClientHasDevice(device Device) (*Client, error) {
-	// TODO validation of device
-	return &Client{connection: newConnection(device)}, nil
+func NewClient(params *ClientParam) (*Client, error) {
+	if params.Addr == "" {
+		return nil, errors.New("airplay: [ERR] Address is required to NewClient()")
+	}
+
+	if params.Port <= 0 {
+		params.Port = 7000
+	}
+
+	client := &Client{}
+	device := Device{Addr: params.Addr, Port: params.Port}
+	client.connection = newConnection(device)
+
+	return client, nil
+}
+
+func (c *Client) connectTo(address string, port int) {
+	device := Device{Addr: address, Port: port}
+	c.connection = newConnection(device)
 }
 
 // Play start content playback.

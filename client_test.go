@@ -303,11 +303,7 @@ func airTestServer(t *testing.T, requests []testExpectRequest, handler testHunde
 
 func getTestClient(t *testing.T, ts *httptest.Server) *Client {
 	addr, port := getAddrAndPort(t, ts.URL)
-	device := Device{
-		Addr: addr,
-		Port: port,
-	}
-	client, err := NewClientHasDevice(device)
+	client, err := NewClient(&ClientParam{Addr: addr, Port: port})
 	if err != nil {
 		t.Fatal(err)
 	}
