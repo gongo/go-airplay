@@ -120,11 +120,7 @@ L:
 }
 
 func (d *discovery) close() {
-	if d.closed {
-		return
-	}
 	d.closed = true
-
 	close(d.closedCh)
 	d.uconn.Close()
 	d.mconn.Close()
@@ -136,13 +132,16 @@ func (d *discovery) receive(l *net.UDPConn, ch chan *dns.Msg) {
 	for !d.closed {
 		n, _, err := l.ReadFromUDP(buf)
 		if err != nil {
-			log.Println(err)
+			// Ignore error that was occurred by Close() while blocked to read packet
+			if !d.closed {
+				log.Printf("airplay: [ERR] Failed to receive packet: %v", err)
+			}
 			continue
 		}
-		msg := new(dns.Msg)
 
+		msg := new(dns.Msg)
 		if err := msg.Unpack(buf[:n]); err != nil {
-			log.Println(err)
+			log.Printf("airplay: [ERR] Failed to unpack packet: %v", err)
 			continue
 		}
 
