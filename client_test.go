@@ -145,7 +145,7 @@ func TestScrub(t *testing.T) {
 
 		positionFloat, err := strconv.ParseFloat(positionString, 64)
 		if err != nil {
-			t.Fatal("Incorrect query parameter `position` (actual = %s)", positionString)
+			t.Fatalf("Incorrect query parameter `position` (actual = %s)", positionString)
 		}
 
 		if positionFloat != position {
@@ -166,7 +166,7 @@ func TestRate(t *testing.T) {
 
 		rateFloat, err := strconv.ParseFloat(rateString, 64)
 		if err != nil {
-			t.Fatal("Incorrect query parameter `value` (actual = %s)", rateString)
+			t.Fatalf("Incorrect query parameter `value` (actual = %s)", rateString)
 		}
 
 		if rateFloat != rate {
