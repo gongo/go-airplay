@@ -15,10 +15,11 @@ func main() {
 
 	extraTemplate := `
 * (%s)
-  Model Name     : %s
-  MAC Address    : %s
-  Server Version : %s
-  Features       : %s
+  Model Name         : %s
+  MAC Address        : %s
+  Server Version     : %s
+  Features           : %s
+  Password Required? : %s
 `
 	extra := ""
 
@@ -29,6 +30,11 @@ func main() {
 			strconv.Itoa(int(device.Port)),
 		})
 
+		passwordRequiredFlag := "no"
+		if device.Extra.IsPasswordRequired {
+			passwordRequiredFlag = "yes"
+		}
+
 		extra += fmt.Sprintf(
 			extraTemplate,
 			device.Name,
@@ -36,6 +42,7 @@ func main() {
 			device.Extra.MacAddress,
 			device.Extra.ServerVersion,
 			device.Extra.Features,
+			passwordRequiredFlag,
 		)
 	}
 

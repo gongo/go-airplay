@@ -10,10 +10,11 @@ type Device struct {
 
 // A DeviceExtra is extra information of AirPlay device.
 type DeviceExtra struct {
-	Model         string
-	Features      string
-	MacAddress    string
-	ServerVersion string
+	Model              string
+	Features           string
+	MacAddress         string
+	ServerVersion      string
+	IsPasswordRequired bool
 }
 
 // Devices returns all AirPlay devices in LAN.
@@ -43,10 +44,15 @@ func FirstDevice() Device {
 
 func entryToDevice(entry *entry) Device {
 	extra := DeviceExtra{
-		Model:         entry.textRecords["model"],
-		Features:      entry.textRecords["features"],
-		MacAddress:    entry.textRecords["deviceid"],
-		ServerVersion: entry.textRecords["srcvers"],
+		Model:              entry.textRecords["model"],
+		Features:           entry.textRecords["features"],
+		MacAddress:         entry.textRecords["deviceid"],
+		ServerVersion:      entry.textRecords["srcvers"],
+		IsPasswordRequired: false,
+	}
+
+	if pw, ok := entry.textRecords["pw"]; ok && pw == "1" {
+		extra.IsPasswordRequired = true
 	}
 
 	return Device{

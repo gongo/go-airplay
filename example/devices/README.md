@@ -22,14 +22,16 @@ or
 +------------------+------------+------+
 
 * (AppleTV.local.)
-  Model Name     : AppleTV2,1
-  MAC Address    : FF:FF:FF:FF:FF:FF
-  Server Version : 222.22
-  Features       : 0xFFFFFFF,0xF
+  Model Name         : AppleTV2,1
+  MAC Address        : FF:FF:FF:FF:FF:FF
+  Server Version     : 222.22
+  Features           : 0xFFFFFFF,0xF
+  Password Required? : no
 
 * (AirServer.local.)
-  Model Name     : AppleTV3,2
-  MAC Address    : 00:00:00:00:00:00
-  Server Version : 111.11
-  Features       : 0x10000000
+  Model Name         : AppleTV3,2
+  MAC Address        : 00:00:00:00:00:00
+  Server Version     : 111.11
+  Features           : 0x10000000
+  Password Required? : yes
 ```
