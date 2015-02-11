@@ -24,6 +24,7 @@ func TestParse(t *testing.T) {
 	m.Extra = []dns.RR{
 		rr("GongoTV.local. 10 IN A    192.0.2.1"),
 		rr("GongoTV.example.com. 120 IN SRV 0 0 7000 GongoTV.local."),
+		rr("GongoTV.example.com. 120 IN TXT \"deviceid=00:00:00:00:00:00\" \"model=AppleTV2,1\""),
 	}
 
 	d, _ := newDiscovery()
@@ -39,6 +40,10 @@ func TestParse(t *testing.T) {
 
 	if entry.port != 7000 {
 		t.Errorf("Unexpected entry.port (%d)", entry.port)
+	}
+
+	if len(entry.textRecords) != 2 {
+		t.Errorf("Unexpected entry.textRecords (%v)", entry.textRecords)
 	}
 }
 

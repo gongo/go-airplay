@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/miekg/dns"
@@ -32,10 +33,11 @@ type discovery struct {
 }
 
 type entry struct {
-	ipv4       net.IP
-	port       int
-	hostName   string
-	domainName string
+	ipv4        net.IP
+	port        int
+	hostName    string
+	domainName  string
+	textRecords map[string]string
 }
 
 type queryParam struct {
@@ -154,7 +156,7 @@ func (d *discovery) receive(l *net.UDPConn, ch chan *dns.Msg) {
 }
 
 func (d *discovery) parse(resp *dns.Msg) (*entry, error) {
-	entry := new(entry)
+	entry := &entry{textRecords: make(map[string]string)}
 
 	for _, answer := range resp.Answer {
 		switch rr := answer.(type) {
@@ -174,7 +176,15 @@ func (d *discovery) parse(resp *dns.Msg) (*entry, error) {
 				entry.hostName = rr.Target
 				entry.port = int(rr.Port)
 			}
+		case *dns.TXT:
+			if rr.Hdr.Name == entry.domainName {
+				for _, txt := range rr.Txt {
+					lines := strings.Split(txt, "=")
+					entry.textRecords[lines[0]] = lines[1]
+				}
+			}
 		}
+
 	}
 
 	if entry.hostName == "" {

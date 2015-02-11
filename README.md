@@ -72,10 +72,14 @@ See [example/slideshow](./example/slideshow/main.go) :
 ### Devices
 
 ```go
+// Get all AirPlay devices in LAN.
 devices := airplay.Devices()
+
+// Get the first found AirPlay device in LAN.
+device := airplay.FirstDevice()
 ```
 
-See [example/devices](./example/devices/main.go) :
+See [example/devices](./example/devices/) :
 
 ## LICENSE
 
