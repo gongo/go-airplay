@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	"time"
+
 	"github.com/gongo/text-parameters"
 )
 
@@ -54,6 +56,11 @@ var (
 type playbackInfoParam struct {
 	Location string  `parameters:"Content-Location"`
 	Position float64 `parameters:"Start-Position"`
+}
+
+func TestMain(m *testing.M) {
+	requestInverval = time.Millisecond
+	os.Exit(m.Run())
 }
 
 func TestPost(t *testing.T) {
