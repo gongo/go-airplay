@@ -25,6 +25,12 @@ ch := client.Play("http://movie.example.com/go.mp4")
 <-ch
 ```
 
+If device is required password:
+
+```go
+client.SetPassword("password")
+```
+
 Specifying the start position:
 
 ```go
