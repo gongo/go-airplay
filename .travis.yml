@@ -5,6 +5,7 @@ go:
   - 1.5
 
 install:
+  - go get github.com/miekg/dns
   - go get github.com/gongo/text-parameters
   - go get github.com/DHowett/go-plist
   - go get github.com/axw/gocov/gocov
