@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/gongo/text-parameters"
 )
 
 type testHundelrFunc func(*testing.T, http.ResponseWriter, *http.Request)
@@ -49,6 +51,11 @@ var (
 </plist>`
 )
 
+type playbackInfoParam struct {
+	Location string  `parameters:"Content-Location"`
+	Position float64 `parameters:"Start-Position"`
+}
+
 func TestPost(t *testing.T) {
 	expectRequests := []testExpectRequest{
 		{"POST", "/play"},
@@ -64,19 +71,16 @@ func TestPost(t *testing.T) {
 
 	ts := airTestServer(t, expectRequests, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
 		if req.URL.Path == "/play" {
-			bytes, err := ioutil.ReadAll(req.Body)
-			if err != nil {
-				t.Fatal(err)
+			u := &playbackInfoParam{}
+			decoder := parameters.NewDecorder(req.Body)
+			decoder.Decode(u)
+
+			if u.Location != "http://movie.example.com/go.mp4" {
+				t.Fatalf("Incorrect request location (actual %s)", u.Location)
 			}
 
-			result, _ := regexp.Match("Content-Location: http://movie.example.com/go.mp4", bytes)
-			if !result {
-				t.Fatalf("Incorrect request location (actual %s)", string(bytes))
-			}
-
-			result, _ = regexp.Match("Start-Position: 0.0", bytes)
-			if !result {
-				t.Fatalf("Incorrect request position (actual %s)", string(bytes))
+			if u.Position != 0.0 {
+				t.Fatalf("Incorrect request position (actual %f)", u.Position)
 			}
 		}
 
@@ -105,14 +109,12 @@ func TestPostAt(t *testing.T) {
 
 	ts := airTestServer(t, expectRequests, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
 		if req.URL.Path == "/play" {
-			bytes, err := ioutil.ReadAll(req.Body)
-			if err != nil {
-				t.Fatal(err)
-			}
+			u := &playbackInfoParam{}
+			decoder := parameters.NewDecorder(req.Body)
+			decoder.Decode(u)
 
-			result, _ := regexp.Match("Start-Position: 12.3", bytes)
-			if !result {
-				t.Fatalf("Incorrect request position (actual %s)", string(bytes))
+			if u.Position != 12.3 {
+				t.Fatalf("Incorrect request position (actual %f)", u.Position)
 			}
 		}
 
@@ -278,6 +280,108 @@ func TestGetPlaybackInfo(t *testing.T) {
 
 	if info.Duration != 36.0 || info.Position != 18.0 {
 		t.Fatal("Incorrect PlaybackInfo")
+	}
+}
+
+func TestClientToPasswordRequiredDevice(t *testing.T) {
+	expectRequests := []testExpectRequest{
+		{"POST", "/play"},
+		{"POST", "/play"},
+		{"GET", "/playback-info"},
+		{"GET", "/playback-info"},
+	}
+	responseXMLs := []string{
+		playingPlaybackInfo,
+		stopPlaybackInfo,
+	}
+	playRequestCount := 1
+
+	ts := airTestServer(t, expectRequests, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
+		switch req.URL.Path {
+		case "/play":
+			switch playRequestCount {
+			case 1:
+				w.Header().Add("WWW-Authenticate", "Digest realm=\"AirPlay\", nonce=\"4444\"")
+				w.WriteHeader(http.StatusUnauthorized)
+			case 2:
+				pattern := regexp.MustCompile("^Digest .*response=\"([^\"]+)\"")
+				results := pattern.FindStringSubmatch(req.Header.Get("Authorization"))
+				if results == nil {
+					t.Fatalf("Unexpected request: %s", req.Header.Get("Authorization"))
+				}
+
+				// response was created on the assumption that password is "gongo"
+				expect := "f53f5ad052f58cee48f550b9632e0446"
+				actual := results[1]
+				if expect != actual {
+					t.Fatalf("Incorrect authorization header (actual %s)", actual)
+				}
+			default:
+				t.Fatal("Surplus request has occurs")
+			}
+
+			playRequestCount++
+		case "/playback-info":
+			xml := responseXMLs[0]
+			responseXMLs = responseXMLs[1:]
+			w.Write([]byte(xml))
+		}
+	})
+
+	client := getTestClient(t, ts)
+	client.SetPassword("gongo")
+	ch := client.Play("http://movie.example.com/go.mp4")
+	if err := <-ch; err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestClientWithErrorAboutPassword(t *testing.T) {
+	expectRequests := []testExpectRequest{
+		{"POST", "/play"},
+		{"POST", "/play"},
+		{"POST", "/play"},
+	}
+	playRequestCount := 1
+
+	ts := airTestServer(t, expectRequests, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
+		switch playRequestCount {
+		case 1, 2:
+			w.Header().Add("WWW-Authenticate", "Digest realm=\"AirPlay\", nonce=\"4444\"")
+			w.WriteHeader(http.StatusUnauthorized)
+		case 3:
+			pattern := regexp.MustCompile("^Digest .*response=\"([^\"]+)\"")
+			results := pattern.FindStringSubmatch(req.Header.Get("Authorization"))
+			if results == nil {
+				t.Fatalf("Unexpected request: %s", req.Header.Get("Authorization"))
+			}
+
+			// response was created on the assumption that password is "gongo"
+			expect := "f53f5ad052f58cee48f550b9632e0446"
+			actual := results[1]
+			if expect != actual {
+				w.Header().Add("WWW-Authenticate", "Digest realm=\"AirPlay\", nonce=\"4444\"")
+				w.WriteHeader(http.StatusUnauthorized)
+			}
+		default:
+			t.Fatal("Surplus request has occurs")
+		}
+
+		playRequestCount++
+	})
+
+	var ch <-chan error
+
+	client := getTestClient(t, ts)
+	ch = client.Play("http://movie.example.com/go.mp4")
+	if err := <-ch; err == nil {
+		t.Fatal("It should occurs [password required] error")
+	}
+
+	client.SetPassword("wrongpassword")
+	ch = client.Play("http://movie.example.com/go.mp4")
+	if err := <-ch; err == nil {
+		t.Fatal("It should occurs [wrong password] error")
 	}
 }
 

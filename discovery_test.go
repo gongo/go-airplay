@@ -52,7 +52,7 @@ func TestParseErrorWithoutRequireRecords(t *testing.T) {
 	d, _ := newDiscovery()
 
 	if _, err := d.parse(m); err == nil {
-		t.Fatalf("It should occurs [PTR not found] error")
+		t.Fatal("It should occurs [PTR not found] error")
 	}
 
 	m.Answer = []dns.RR{
@@ -60,7 +60,7 @@ func TestParseErrorWithoutRequireRecords(t *testing.T) {
 	}
 
 	if _, err := d.parse(m); err == nil {
-		t.Fatalf("It should occurs [SRV not found] error")
+		t.Fatal("It should occurs [SRV not found] error")
 	}
 
 	m.Extra = []dns.RR{
@@ -68,6 +68,6 @@ func TestParseErrorWithoutRequireRecords(t *testing.T) {
 	}
 
 	if _, err := d.parse(m); err == nil {
-		t.Fatalf("It should occurs [A not found] error")
+		t.Fatal("It should occurs [A not found] error")
 	}
 }
