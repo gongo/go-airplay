@@ -43,8 +43,9 @@ const (
 )
 
 type ClientParam struct {
-	Addr string
-	Port int
+	Addr     string
+	Port     int
+	Password string
 }
 
 func DefaultClient() (*Client, error) {
@@ -69,12 +70,15 @@ func NewClient(params *ClientParam) (*Client, error) {
 	device := Device{Addr: params.Addr, Port: params.Port}
 	client.connection = newConnection(device)
 
+	if params.Password != "" {
+		client.SetPassword(params.Password)
+	}
+
 	return client, nil
 }
 
-func (c *Client) connectTo(address string, port int) {
-	device := Device{Addr: address, Port: port}
-	c.connection = newConnection(device)
+func (c Client) SetPassword(password string) {
+	c.connection.setPassword(password)
 }
 
 // Play start content playback.
@@ -178,7 +182,7 @@ func (c *Client) PhotoWithSlide(path string, transition SlideTransition) {
 		log.Fatal(err)
 	}
 
-	header := requestHeader{
+	header := http.Header{
 		"X-Apple-Transition": {string(transition)},
 	}
 	c.connection.postWithHeader("photo", image, header)
