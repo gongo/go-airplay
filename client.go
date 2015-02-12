@@ -42,6 +42,10 @@ const (
 	SlideRight    SlideTransition = "SlideRight"
 )
 
+var (
+	requestInverval = time.Second
+)
+
 type ClientParam struct {
 	Addr     string
 	Port     int
@@ -107,7 +111,7 @@ func (c *Client) PlayAt(url string, position float64) <-chan error {
 			return
 		}
 
-		interval := time.Tick(time.Second)
+		interval := time.Tick(requestInverval)
 
 		for {
 			info, err := c.GetPlaybackInfo()
@@ -211,7 +215,7 @@ func (c *Client) GetPlaybackInfo() (*PlaybackInfo, error) {
 }
 
 func (c *Client) waitForReadyToPlay() error {
-	interval := time.Tick(time.Second)
+	interval := time.Tick(requestInverval)
 	timeout := time.After(10 * time.Second)
 
 	for {

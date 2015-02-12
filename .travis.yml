@@ -1,14 +1,16 @@
 language: go
 
 go:
-  - 1.3
+  - 1.4
+  - 1.5
 
 install:
-  - go get github.com/armon/mdns
+  - go get github.com/miekg/dns
+  - go get github.com/gongo/text-parameters
   - go get github.com/DHowett/go-plist
   - go get github.com/axw/gocov/gocov
   - go get github.com/mattn/goveralls
-  - go get code.google.com/p/go.tools/cmd/cover
+  - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
 
 script:
-  - $HOME/gopath/bin/goveralls -repotoken r3QqWLtNlXmGnAFsgV4mPtzCzgY6pSAd9
+  - $HOME/gopath/bin/goveralls -service=travis-ci
