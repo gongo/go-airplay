@@ -14,7 +14,7 @@ Go bindings for AirPlay client
 ```go
 import "github.com/gongo/go-airplay"
 
-client, err := airplay.DefaultClient()
+client, err := airplay.FirstClient()
 if err != nil {
 	log.Fatal(err)
 }

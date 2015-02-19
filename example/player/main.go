@@ -38,7 +38,7 @@ func init() {
 }
 
 func airplayClient() *airplay.Client {
-	client, err := airplay.DefaultClient()
+	client, err := airplay.FirstClient()
 	if err != nil {
 		log.Fatal(err)
 	}
