@@ -21,6 +21,9 @@ type PlaybackInfo struct {
 	// IsReadyToPlay, if true, content is currently playing or ready to play.
 	IsReadyToPlay bool `plist:"readyToPlay"`
 
+	// ReadyToPlayValue represents the information on whether content is currently playing, ready to play or not.
+	ReadyToPlayValue interface{} `plist:"readyToPlay"`
+
 	// Duration represents playback duration in seconds.
 	Duration float64 `plist:"duration"`
 
@@ -210,6 +213,13 @@ func (c *Client) GetPlaybackInfo() (*PlaybackInfo, error) {
 	info := &PlaybackInfo{}
 	if err := decoder.Decode(info); err != nil {
 		return nil, err
+	}
+
+	switch t := info.ReadyToPlayValue.(type) {
+	case uint64: // AppleTV 4G
+		info.IsReadyToPlay = (t == 1)
+	case bool: // AppleTV 2G, 3G
+		info.IsReadyToPlay = t
 	}
 
 	return info, nil
