@@ -1,7 +1,13 @@
 language: go
 
+sudo: false
+
 go:
   - 1.7
+
+branches:
+  only:
+    - master
 
 install:
   - go get github.com/miekg/dns
