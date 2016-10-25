@@ -51,6 +51,15 @@ var (
 	<true/>
 </dict>
 </plist>`
+
+	playingPlaybackInfoAt4G = `
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>readyToPlay</key>
+	<integer>1</integer>
+</dict>
+</plist>`
 )
 
 type playbackInfoParam struct {
@@ -287,6 +296,33 @@ func TestGetPlaybackInfo(t *testing.T) {
 
 	if info.Duration != 36.0 || info.Position != 18.0 {
 		t.Fatal("Incorrect PlaybackInfo")
+	}
+}
+
+func TestGetPlaybackInfoWithVariousVersion(t *testing.T) {
+	expectRequests := []testExpectRequest{
+		{"GET", "/playback-info"},
+		{"GET", "/playback-info"},
+	}
+	responseXMLs := []string{playingPlaybackInfo, playingPlaybackInfoAt4G}
+
+	ts := airTestServer(t, expectRequests, func(t *testing.T, w http.ResponseWriter, req *http.Request) {
+		xml := responseXMLs[0]
+		responseXMLs = responseXMLs[1:]
+		w.Write([]byte(xml))
+	})
+
+	client := getTestClient(t, ts)
+
+	for range responseXMLs {
+		info, err := client.GetPlaybackInfo()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !info.IsReadyToPlay {
+			t.Fatal("PlaybackInfo is not ready to play status")
+		}
 	}
 }
 
