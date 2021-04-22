@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DHowett/go-plist"
+	"howett.net/plist"
 )
 
 // A PlaybackInfo is a playback information of playing content.
